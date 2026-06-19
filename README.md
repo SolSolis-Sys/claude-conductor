@@ -51,24 +51,23 @@ A Claude Code plugin that provides structured patterns for dispatching agents, a
 
 ## Installation
 
-### Via git clone (recommended)
-
 ```bash
-git clone https://github.com/SolSolis-Sys/claude-conductor
+claude plugin marketplace add https://github.com/SolSolis-Sys/claude-conductor
+claude plugin install claude-conductor
 ```
 
-Copy the plugin directory to your Claude Code plugins folder:
-
-- **macOS / Linux:** `~/.claude/plugins/claude-conductor/`
-- **Windows:** `C:\Users\<username>\.claude\plugins\claude-conductor\`
+Then **restart Claude Code** to activate the plugin.
 
 ### Local development / testing
 
 ```bash
+git clone https://github.com/SolSolis-Sys/claude-conductor
 claude --plugin-dir ./claude-conductor
 ```
 
 Use `/reload-plugins` inside a Claude Code session to reload without restarting.
+
+> **Windows note:** `~/.claude/` resolves to `C:/Users/<username>/.claude/`. On non-Bash shells (cmd.exe), resolve the path via `$env:USERPROFILE/.claude/` instead.
 
 ---
 

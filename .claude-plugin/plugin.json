@@ -8,5 +8,6 @@
   "license": "MIT",
   "engines": {
     "claudeCode": ">=2.1.154"
-  }
+  },
+  "hooks": "./hooks/hooks.json"
 }
