@@ -1,0 +1,10 @@
+{
+  "name": "claude-conductor",
+  "version": "1.0.2",
+  "description": "Orchestration primitives for multi-agent Claude Code workflows",
+  "license": "MIT",
+  "author": "SolSolis-Sys",
+  "scripts": {
+    "conductor-hub": "node scripts/hub.js"
+  }
+}
