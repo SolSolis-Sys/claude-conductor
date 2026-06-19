@@ -99,6 +99,15 @@ Launches three Explore agents in parallel (security, performance, maintainabilit
 
 ---
 
+## Ecosystem
+
+Claude Conductor works best alongside:
+
+- **[claude-token-watch](https://github.com/SolSolis-Sys/claude-token-watch)** — Live token and cost monitoring. Conductor reads its metrics file to auto-suggest `/compact` when context reaches 90%. Install token-watch first for full synergie.
+- **[conductor-blueprints](https://github.com/SolSolis-Sys/conductor-blueprints)** — Official community blueprint library. Use `conductor hub install <name>` to install reusable agent orchestration patterns.
+
+---
+
 ## License
 
 MIT — [SolSolis-Sys](https://github.com/SolSolis-Sys)
