@@ -9,6 +9,16 @@ const hub = require('../lib/hub');
 
 const [, , subcmd, arg] = process.argv;
 
+const NAME_RE_CLI = /^[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)?$/;
+if ((subcmd === 'install' || subcmd === 'info') && arg && !NAME_RE_CLI.test(arg)) {
+  console.error(`conductor hub: invalid name '${arg}'. Use letters, digits, -, _ or author/name format.`);
+  process.exit(1);
+}
+if (subcmd === 'install' && !arg) {
+  console.error('conductor hub install: missing blueprint name. Usage: conductor hub install <name>');
+  process.exit(1);
+}
+
 if (subcmd === 'list') {
   hub.list().catch((e) => {
     console.error(`conductor hub error: ${e.message}`);

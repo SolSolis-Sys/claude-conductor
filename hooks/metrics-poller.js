@@ -29,11 +29,10 @@ function main() {
   const messages = [];
 
   const contextPct = typeof metrics.context_pct === 'number' ? metrics.context_pct : null;
-  const alert = metrics.alert === true;
   const quota5hPct = typeof metrics.quota_5h_pct === 'number' ? metrics.quota_5h_pct : null;
 
-  if (alert || (contextPct !== null && contextPct >= CONTEXT_THRESHOLD)) {
-    const pct = contextPct !== null ? Math.round(contextPct * 100) : '?';
+  if (contextPct !== null && contextPct >= CONTEXT_THRESHOLD) {
+    const pct = Math.round(contextPct * 100);
     messages.push(`Context at ${pct}% — consider /compact to free context window.`);
   }
 
