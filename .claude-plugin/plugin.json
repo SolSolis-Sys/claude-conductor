@@ -1,0 +1,12 @@
+{
+  "name": "claude-conductor",
+  "description": "Orchestration primitives for multi-agent Claude Code workflows — dispatch, audit, loop, and agent registry",
+  "version": "1.0.0",
+  "author": { "name": "SolSolis-Sys" },
+  "homepage": "https://github.com/SolSolis-Sys/claude-conductor",
+  "repository": "https://github.com/SolSolis-Sys/claude-conductor",
+  "license": "MIT",
+  "engines": {
+    "claudeCode": ">=2.1.154"
+  }
+}
