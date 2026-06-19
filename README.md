@@ -1,33 +1,70 @@
 # claude-conductor
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Claude%20Code-blue.svg)](https://claude.ai/code)
-[![Plugin](https://img.shields.io/badge/type-plugin-red.svg)](https://docs.anthropic.com/claude-code)
+> Multi-agent orchestration plugin for Claude Code — dispatch agents, run parallel audits, manage blueprints, and automate context cleanup.
 
-> Orchestration primitives for multi-agent Claude Code workflows.
-
-A Claude Code plugin that provides structured patterns for dispatching agents, auditing codebases, running autonomous loops, and maintaining an agent registry.
+![Version](https://img.shields.io/badge/version-1.0.4-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 
 ---
 
-## Why conductor?
+## Features
 
-- **Stop reinventing dispatch prompts** — every multi-agent workflow needs identity overrides, path exclusions, and tools checklists. Conductor generates them for you.
-- **Registry-aware recommendations** — scans your actual `~/.claude/agents/` and recommends the right agent for each task rather than guessing.
-- **Proven loop patterns** — `loop-until-count`, `loop-until-dry`, and `loop-until-budget` cover the three most common autonomous workflows without boilerplate.
+- **Agent registry** — scans `~/.claude/agents/` and generates a YAML catalog with names, descriptions, and models
+- **Dispatch templates** — structured prompts with identity overrides, path exclusions, and tools checklists generated automatically
+- **Parallel audit** — 3-perspective parallel Explore agents (security, performance, maintainability) with a synthesized report
+- **Loop patterns** — `loop-until-count`, `loop-until-dry`, `loop-until-budget` for autonomous workflows without boilerplate
+- **Blueprint hub** — install and run community orchestration patterns from `conductor-blueprints`
+- **Metrics integration** — reads token-watch data to suggest `/compact` at 90% context
+- **Zero dependencies** — pure Node.js built-ins only
 
----
+## Install
 
-## What it does
+### Via Claude Code marketplace (recommended)
 
-| Primitive | Description |
-|-----------|-------------|
-| **Agent registry** | Scans `~/.claude/agents/` and generates `conductor-registry.yaml` with names, descriptions, and models |
-| **Dispatch templates** | Structured prompts with identity overrides, path exclusions, and tools checklists |
-| **Audit pattern** | 3-perspective parallel Explore agents with synthesis |
-| **Loop patterns** | `loop-until-count` / `loop-until-dry` / `loop-until-budget` for autonomous workflows |
+```bash
+claude plugin marketplace add https://github.com/SolSolis-Sys/claude-conductor
+claude plugin install claude-conductor
+```
 
----
+Then restart Claude Code to activate the plugin.
+
+### Local development
+
+```bash
+git clone https://github.com/SolSolis-Sys/claude-conductor
+claude --plugin-dir ./claude-conductor
+```
+
+Use `/reload-plugins` inside a session to reload without restarting.
+
+> **Windows:** `~/.claude/` resolves to `C:/Users/<username>/.claude/`. On cmd.exe, use `$env:USERPROFILE/.claude/` instead.
+
+## Quick start
+
+**1. Build your registry**
+
+```
+/conductor:scan-agents
+```
+
+Scans `~/.claude/agents/` and writes `~/.claude/conductor-registry.yaml`.
+
+**2. Dispatch a task**
+
+```
+/conductor:dispatch refactor the authentication module
+```
+
+Conductor reads the registry, picks best-fit agents, and generates a dispatch prompt with identity overrides and path exclusions already filled in.
+
+**3. Run a parallel audit**
+
+```
+/conductor:audit ./src
+```
+
+Launches three Explore agents in parallel and synthesizes findings into a single report.
 
 ## Commands
 
@@ -38,76 +75,52 @@ A Claude Code plugin that provides structured patterns for dispatching agents, a
 | `/conductor:audit <target>` | Run 3-perspective parallel audit on a path or codebase |
 | `/conductor:loop <pattern>` | Reference loop patterns (count / dry / budget) |
 
-> **Windows note:** `~/.claude/` resolves to `C:/Users/<username>/.claude/`. On non-Bash shells (cmd.exe), resolve the path via `$env:USERPROFILE/.claude/` instead.
-
----
-
-## Skills (auto-invoked)
-
-- **orchestration-patterns** — guides agent dispatch decisions (workflow vs Agent tool vs parallel calls)
-- **agent-registry** — reads registry to recommend the right agent for a task
-
----
-
-## Installation
+## Hub Commands
 
 ```bash
-claude plugin marketplace add https://github.com/SolSolis-Sys/claude-conductor
-claude plugin install claude-conductor
+# List all available blueprints
+conductor hub list
+
+# Search blueprints by keyword or tag
+conductor hub search tdd
+
+# Install a blueprint locally
+conductor hub install tdd-bug-hunter
+
+# Get details on a blueprint
+conductor hub info adversarial-review
 ```
 
-Then **restart Claude Code** to activate the plugin.
+Blueprints are saved to `~/.claude/conductor/blueprints/` after install.
 
-### Local development / testing
+## Context Guard
 
-```bash
-git clone https://github.com/SolSolis-Sys/claude-conductor
-claude --plugin-dir ./claude-conductor
-```
+When used alongside [claude-token-watch](https://github.com/SolSolis-Sys/claude-token-watch), conductor reads the live metrics file (`~/.claude/token-watch/metrics.json`) and emits a `/compact` advisory when:
 
-Use `/reload-plugins` inside a Claude Code session to reload without restarting.
+- Context window exceeds 90%
+- 5h quota exceeds 90%
 
-> **Windows note:** `~/.claude/` resolves to `C:/Users/<username>/.claude/`. On non-Bash shells (cmd.exe), resolve the path via `$env:USERPROFILE/.claude/` instead.
-
----
-
-## Quick start
-
-**Step 1 — Build your registry**
-
-```
-/conductor:scan-agents
-```
-
-Scans `~/.claude/agents/` and writes `~/.claude/conductor-registry.yaml` with every agent's name, description, and model.
-
-**Step 2 — Dispatch a task**
-
-```
-/conductor:dispatch refactor the authentication module
-```
-
-Conductor reads the registry, picks the best-fit agents, and generates a dispatch prompt with identity overrides and path exclusions already filled in.
-
-**Step 3 — Run a parallel audit**
-
-```
-/conductor:audit ./src
-```
-
-Launches three Explore agents in parallel (security, performance, maintainability perspectives) and synthesizes findings into a single report.
-
----
+Install both plugins for full autonomous monitoring.
 
 ## Ecosystem
 
-Claude Conductor works best alongside:
+- **[claude-token-watch](https://github.com/SolSolis-Sys/claude-token-watch)** — token monitoring, required for context guard feature
+- **[conductor-blueprints](https://github.com/SolSolis-Sys/conductor-blueprints)** — community blueprint registry
 
-- **[claude-token-watch](https://github.com/SolSolis-Sys/claude-token-watch)** — Live token and cost monitoring. Conductor reads its metrics file to auto-suggest `/compact` when context reaches 90%. Install token-watch first for full synergie.
-- **[conductor-blueprints](https://github.com/SolSolis-Sys/conductor-blueprints)** — Official community blueprint library. Use `conductor hub install <name>` to install reusable agent orchestration patterns.
+## Prompt for your AI agent
+
+```
+Please install the claude-conductor plugin for Claude Code.
+1. Run: claude plugin marketplace add https://github.com/SolSolis-Sys/claude-conductor
+2. Then: claude plugin install claude-conductor
+3. Optionally install claude-token-watch for context monitoring integration.
+4. Restart Claude Code. Run: conductor hub list  to verify.
+```
 
 ---
 
+*Built with [Claude](https://claude.ai) (Anthropic) — AI pair programming.*
+
 ## License
 
-MIT — [SolSolis-Sys](https://github.com/SolSolis-Sys)
+MIT © [SolSolis-Sys](https://github.com/SolSolis-Sys)
