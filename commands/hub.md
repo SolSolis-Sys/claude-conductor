@@ -6,6 +6,7 @@ Browse and install blueprints from the community library.
 
 ```
 conductor hub list
+conductor hub search <query>
 conductor hub install <name>
 conductor hub info <name>
 ```
@@ -13,10 +14,16 @@ conductor hub info <name>
 ## Commands
 
 - `list` — Show available blueprints from the catalog
+- `search <query>` — Search blueprints by name, tag, or description
 - `install <name>` — Install a blueprint locally
 - `info <name>` — Show blueprint details
 
 ## Examples
+
+Search for TDD-related blueprints:
+```
+conductor hub search tdd
+```
 
 Install the TDD bug hunter blueprint:
 ```

@@ -2,7 +2,7 @@
 
 /**
  * conductor hub CLI — entry point
- * Usage: node scripts/hub.js <list|install|info> [name]
+ * Usage: node scripts/hub.js <list|search|install|info> [name]
  */
 
 const hub = require('../lib/hub');
@@ -24,6 +24,8 @@ if (subcmd === 'list') {
     console.error(`conductor hub error: ${e.message}`);
     process.exit(1);
   });
+} else if (subcmd === 'search') {
+  hub.search(arg).catch(console.error);
 } else if (subcmd === 'install' && arg) {
   hub.install(arg).catch((e) => {
     console.error(`conductor hub error: ${e.message}`);
@@ -35,10 +37,11 @@ if (subcmd === 'list') {
     process.exit(1);
   });
 } else {
-  console.log('Usage: conductor hub <list|install|info> [name]');
+  console.log('Usage: conductor hub <list|search|install|info> [name]');
   console.log('');
   console.log('Commands:');
   console.log('  list              Show available blueprints from the catalog');
+  console.log('  search <query>    Search blueprints by name, tag or description');
   console.log('  install <name>    Install a blueprint locally');
   console.log('  info <name>       Show blueprint details');
   process.exit(1);
