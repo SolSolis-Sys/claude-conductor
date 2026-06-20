@@ -1,5 +1,14 @@
 # Changelog — Git Worktree Integration (Issue #1)
 
+## [1.0.6] — 2026-06-20
+
+### Added
+- `conductor hub submit <path>` — submit a local blueprint to the community registry via GitHub Issue
+  - Validates blueprint.json locally before submission
+  - Creates a labeled GitHub Issue with blueprint details and JSON
+  - Requires `gh` CLI authentication
+  - Supports both directory and direct blueprint.json paths
+
 ## Version 1.0.5 — 2026-06-20
 
 ### Feature: Git Worktree Isolation for Parallel Dispatches
