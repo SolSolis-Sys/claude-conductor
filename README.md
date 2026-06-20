@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 
->🌐 Hub live → https://solsolis-sys.github.io/conductor-blueprints/
+> 🌐 Hub live → https://solsolis-sys.github.io/conductor-blueprints/
 
 > ⚠️ **Alpha — work in progress. Use at your own risk.** Expect rough edges. Found a bug or have a suggestion? Please [open an issue]
 > **Not affiliated with Anthropic.** This is an independent, unofficial tool — not a product of or endorsed by Anthropic.
