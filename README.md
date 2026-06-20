@@ -3,7 +3,7 @@
 
 > Multi-agent orchestration plugin for Claude Code — dispatch agents, run parallel audits, manage blueprints, and automate context cleanup.
 
-![Version](https://img.shields.io/badge/version-1.0.4-blue)
+![Version](https://img.shields.io/badge/version-1.0.6-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 
@@ -21,6 +21,8 @@
 - **Parallel audit** — 3-perspective parallel Explore agents (security, performance, maintainability) with a synthesized report
 - **Loop patterns** — `loop-until-count`, `loop-until-dry`, `loop-until-budget` for autonomous workflows without boilerplate
 - **Blueprint hub** — install and run community orchestration patterns from `conductor-blueprints`
+- **Blueprint submission** — `hub submit <path>` validates a local blueprint and opens a GitHub Issue for community review
+- **Agent scoring** — static keyword scoring recommends the top-3 agents for any task description
 - **Metrics integration** — reads token-watch data to suggest `/compact` at 90% context
 - **Zero dependencies** — pure Node.js built-ins only
 
@@ -95,6 +97,9 @@ conductor hub install tdd-bug-hunter
 
 # Get details on a blueprint
 conductor hub info adversarial-review
+
+# Submit a blueprint to the community registry
+conductor hub submit ./my-blueprint/
 ```
 
 Blueprints are saved to `~/.claude/conductor/blueprints/` after install.
