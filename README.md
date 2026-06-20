@@ -1,5 +1,6 @@
 # claude-conductor
 
+[![CI](https://github.com/SolSolis-Sys/claude-conductor/actions/workflows/ci.yml/badge.svg)](https://github.com/SolSolis-Sys/claude-conductor/actions/workflows/ci.yml)
 
 > Multi-agent orchestration plugin for Claude Code — dispatch agents, run parallel audits, manage blueprints, and automate context cleanup.
 
