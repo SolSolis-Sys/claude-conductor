@@ -8,7 +8,25 @@ Generate a ready-to-use agent dispatch prompt.
 
 ## Steps
 
-1. If `~/.claude/conductor-registry.yaml` exists, read it and suggest matching agents for the task: "$ARGUMENTS"
+1. **Score agents against the task** "$ARGUMENTS":
+
+   Load `~/.claude/conductor-registry.yaml` if it exists (registry of installed agents with tags and capabilities).
+
+   Apply static keyword scoring (from `lib/scoring.js` logic):
+
+   | Agent | Score | Matched keywords |
+   |-------|-------|-----------------|
+   | *(computed from task)* | | |
+
+   Present top-3 recommendations with scores. If score = 0 for all, fall back to manual judgment from the registry.
+
+   Example for task "write Python API endpoint":
+   | Agent | Score | Matched keywords |
+   |-------|-------|-----------------|
+   | matos | 3 | python, api, backend |
+   | matos-exec | 1 | deploy |
+   | theia | 0 | — |
+   → Recommended: **matos**
 
 2. From the registry match (or your best judgment if no registry), determine:
    - `AGENT_NAME` = the name of the selected agent (e.g. `code-reviewer`, `matos`)
