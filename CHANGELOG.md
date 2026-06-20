@@ -1,5 +1,17 @@
 # Changelog — Git Worktree Integration (Issue #1)
 
+## [1.0.7] — 2026-06-20
+
+### Added
+- `conductor task-tree` — session task tracking with ASCII visual tree (closes #3)
+  - Display current tree: `/conductor:task-tree`
+  - Add task: `/conductor:task-tree add <label>`
+  - Update status: `/conductor:task-tree done|run|fail <label>`
+  - Clear tree: `/conductor:task-tree clear`
+  - Persistent task list in `~/.claude/conductor/task-tree.json`
+  - Statuses: pending (○) → running (◎) → done (✓) / failed (✗)
+  - Zero external dependencies — Node.js built-ins only
+
 ## [1.0.6] — 2026-06-20
 
 ### Added
