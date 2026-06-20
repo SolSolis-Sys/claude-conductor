@@ -105,6 +105,72 @@ conductor hub submit ./my-blueprint/
 
 Blueprints are saved to `~/.claude/conductor/blueprints/` after install.
 
+## Interactive Hub Commands
+
+Two interactive modes are available for users who prefer a guided experience.
+
+### `conductor hub discover`
+
+An interactive assistant that helps you find the right blueprint when you're not sure where to start. It asks what you're trying to accomplish, groups blueprints by category, and offers to install your pick in one step.
+
+```
+$ conductor hub discover
+
+Conductor Hub Discovery
+
+What would you like to do?
+  1. Audit or review code
+  2. Test & fix bugs
+  3. Plan & spec features
+  4. Deploy or verify infrastructure
+  5. Improve skills or configuration
+  6. Other (browse by category)
+
+Choice (1-6): 3
+
+Recommended blueprint: idea-to-spec
+   Description: Turn a raw idea into a structured spec with agent review
+   Tags: planning, spec, agents
+   Cost tier: low
+
+Install? (y/n): y
+
+conductor hub: blueprint 'idea-to-spec' v1.0.0 installed
+Location: /home/user/.claude/conductor/blueprints/idea-to-spec/blueprint.json
+```
+
+Choosing option 6 lists every blueprint by number so you can browse freely.
+
+### `conductor hub submit --interactive`
+
+A step-by-step wizard for submitting a blueprint you've built. It reads your local `blueprint.json`, validates it, collects a short description and category, then opens a GitHub Issue in the community registry on your behalf.
+
+Requires the [gh CLI](https://cli.github.com/) to be installed and authenticated (`gh auth login`).
+
+```
+$ conductor hub submit --interactive
+
+Blueprint Submission Wizard
+
+Blueprint name (e.g., my-blueprint): my-review-flow
+Path to blueprint.json (or directory): ./my-review-flow/
+
+Description (short): Multi-agent code review with security and perf passes
+
+Category:
+  1. code
+  2. test
+  3. docs
+  4. ops
+  5. other
+Choice (1-5): 1
+
+Blueprint 'my-review-flow' v1.0.0 submitted
+Issue: https://github.com/SolSolis-Sys/conductor-blueprints/issues/42
+```
+
+The wizard validates required fields (`name`, `version`, `agents`) before submitting. If anything is missing it prints the error and exits without creating an issue.
+
 ## Blueprint Registry
 
 Browse, search and install community blueprints at:
