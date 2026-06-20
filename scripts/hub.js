@@ -7,7 +7,7 @@
 
 const hub = require('../lib/hub');
 
-const [, , subcmd, arg] = process.argv;
+const [, , subcmd, arg, ...extra] = process.argv;
 
 const NAME_RE_CLI = /^[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)?$/;
 if ((subcmd === 'install' || subcmd === 'info') && arg && !NAME_RE_CLI.test(arg)) {
@@ -18,8 +18,8 @@ if (subcmd === 'install' && !arg) {
   console.error('conductor hub install: missing blueprint name. Usage: conductor hub install <name>');
   process.exit(1);
 }
-if (subcmd === 'submit' && !arg) {
-  console.error('conductor hub submit: missing path. Usage: conductor hub submit <path>');
+if (subcmd === 'submit' && !arg && !extra.includes('--interactive')) {
+  console.error('conductor hub submit: missing path. Usage: conductor hub submit <path> or conductor hub submit --interactive');
   process.exit(1);
 }
 
@@ -40,19 +40,31 @@ if (subcmd === 'list') {
     console.error(`conductor hub error: ${e.message}`);
     process.exit(1);
   });
+} else if (subcmd === 'discover') {
+  hub.discover().catch((e) => {
+    console.error(`conductor hub error: ${e.message}`);
+    process.exit(1);
+  });
+} else if (subcmd === 'submit' && arg === '--interactive') {
+  hub.submitInteractive().catch((e) => {
+    console.error(`conductor hub error: ${e.message}`);
+    process.exit(1);
+  });
 } else if (subcmd === 'submit' && arg) {
   hub.submit(arg).catch((e) => {
     console.error(`conductor hub error: ${e.message}`);
     process.exit(1);
   });
 } else {
-  console.log('Usage: conductor hub <list|search|install|info|submit> [name|path]');
+  console.log('Usage: conductor hub <list|search|install|info|discover|submit> [args]');
   console.log('');
   console.log('Commands:');
-  console.log('  list              Show available blueprints from the catalog');
-  console.log('  search <query>    Search blueprints by name, tag or description');
-  console.log('  install <name>    Install a blueprint locally');
-  console.log('  info <name>       Show blueprint details');
-  console.log('  submit <path>     Submit a local blueprint to the community registry');
+  console.log('  list                      Show available blueprints from the catalog');
+  console.log('  search <query>            Search blueprints by name, tag or description');
+  console.log('  install <name>            Install a blueprint locally');
+  console.log('  info <name>               Show blueprint details');
+  console.log('  discover                  Interactive blueprint discovery assistant');
+  console.log('  submit <path>             Submit a local blueprint to the community registry');
+  console.log('  submit --interactive      Guided submission wizard');
   process.exit(1);
 }
