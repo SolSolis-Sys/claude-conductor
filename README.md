@@ -98,6 +98,13 @@ conductor hub info adversarial-review
 
 Blueprints are saved to `~/.claude/conductor/blueprints/` after install.
 
+## Blueprint Registry
+
+Browse, search and install community blueprints at:
+**[conductor-blueprints hub →](https://solsolis-sys.github.io/conductor-blueprints/)**
+
+Click **Install** on any blueprint to copy its URL, then reference it in your workflow.
+
 ## Context Guard
 
 When used alongside [claude-token-watch](https://github.com/SolSolis-Sys/claude-token-watch), conductor reads the live metrics file (`~/.claude/token-watch/metrics.json`) and emits a `/compact` advisory when:
