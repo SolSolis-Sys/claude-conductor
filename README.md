@@ -4,7 +4,7 @@
 
 > Multi-agent orchestration plugin for Claude Code — dispatch agents, run parallel audits, manage blueprints, and automate context cleanup.
 
-![Version](https://img.shields.io/badge/version-1.0.7-blue)
+![Version](https://img.shields.io/badge/version-0.1.7-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 

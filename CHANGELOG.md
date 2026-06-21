@@ -1,6 +1,11 @@
 # Changelog — Git Worktree Integration (Issue #1)
 
-## [1.0.7] — 2026-06-20
+## [0.1.7] — 2026-06-21
+
+### Changed
+- Downgrade versioning to v0.x.y scheme
+
+## [0.1.6] — 2026-06-20
 
 ### Added
 - `conductor task-tree` — session task tracking with ASCII visual tree (closes #3)

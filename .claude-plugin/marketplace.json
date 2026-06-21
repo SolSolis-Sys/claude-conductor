@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Orchestration primitives for multi-agent Claude Code workflows.",
-    "version": "1.0.7"
+    "version": "0.1.7"
   },
   "plugins": [
     {
