@@ -7,7 +7,7 @@
 
 'use strict';
 
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -62,10 +62,15 @@ function getCurrentRef() {
 
 /**
  * Create a new worktree for an agent.
- * @param {string} agentName - agent identifier (e.g., "matos", "janus")
+ * @param {string} agentName - agent identifier (e.g., "backend-agent", "reviewer")
  * @returns {object} { success: boolean, path?: string, error?: string }
  */
 function createWorktree(agentName) {
+  const VALID_NAME = /^[a-zA-Z0-9_-]+$/;
+  if (!VALID_NAME.test(agentName)) {
+    return { success: false, error: `Invalid agent name: ${agentName}` };
+  }
+
   if (!isGitAvailable()) {
     return { success: false, error: 'Git not available or not a git repository' };
   }
@@ -87,7 +92,7 @@ function createWorktree(agentName) {
 
   try {
     // Create worktree at detached HEAD (current commit)
-    execSync(`git worktree add "${worktreePath}" HEAD`, {
+    execFileSync('git', ['worktree', 'add', worktreePath, 'HEAD'], {
       cwd: projectRoot,
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 5000,
@@ -116,6 +121,11 @@ function createWorktree(agentName) {
  * @returns {object} { success: boolean, removed?: string, error?: string }
  */
 function removeWorktree(agentName) {
+  const VALID_NAME = /^[a-zA-Z0-9_-]+$/;
+  if (!VALID_NAME.test(agentName)) {
+    return { success: false, error: `Invalid agent name: ${agentName}` };
+  }
+
   if (!isGitAvailable()) {
     return { success: false, error: 'Git not available' };
   }
@@ -149,14 +159,14 @@ function removeWorktree(agentName) {
 
   try {
     // Remove worktree
-    execSync(`git worktree remove "${worktreePath}"`, {
+    execFileSync('git', ['worktree', 'remove', worktreePath], {
       cwd: projectRoot,
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 5000,
     });
 
     // Prune orphaned refs
-    execSync('git worktree prune', {
+    execFileSync('git', ['worktree', 'prune'], {
       cwd: projectRoot,
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 5000,
@@ -248,7 +258,7 @@ function pruneWorktrees() {
   }
 
   try {
-    execSync('git worktree prune', {
+    execFileSync('git', ['worktree', 'prune'], {
       cwd: projectRoot,
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 5000,

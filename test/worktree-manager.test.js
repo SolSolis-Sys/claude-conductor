@@ -78,6 +78,18 @@ test('WORKTREES_REGISTRY - should be defined', () => {
   );
 });
 
+test('createWorktree - should reject invalid agent names', () => {
+  const result = worktreeManager.createWorktree('agent@name!');
+  assert(result.success === false, 'createWorktree should reject names with special chars');
+  assert(result.error && result.error.includes('Invalid agent name'), 'error message should indicate invalid name');
+});
+
+test('removeWorktree - should reject invalid agent names', () => {
+  const result = worktreeManager.removeWorktree('agent/path');
+  assert(result.success === false, 'removeWorktree should reject names with slashes');
+  assert(result.error && result.error.includes('Invalid agent name'), 'error message should indicate invalid name');
+});
+
 // Run tests
 
 console.log('\nWorktree Manager Test Suite\n' + '='.repeat(40));
