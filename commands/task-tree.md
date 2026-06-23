@@ -1,10 +1,11 @@
 ---
-description: "Display and manage session task tree. Use: /conductor:task-tree [add|done|run|fail|clear] [label]"
+description: "Display and manage hierarchical session task tree. Use: /conductor:task-tree [add|add-child|done|run|fail|clear] [args]"
 ---
 
 # /conductor:task-tree $ARGUMENTS
 
-Track active tasks as a visual ASCII tree during your session.
+Track active tasks as a hierarchical visual tree during your session.
+Tasks persist to `~/.claude/conductor/task-tree.json` across prompts.
 
 ## Usage
 
@@ -13,16 +14,22 @@ Track active tasks as a visual ASCII tree during your session.
 /conductor:task-tree
 ```
 
-**Add a task:**
+**Add a root task:**
 ```
 /conductor:task-tree add "audit memorie-active"
 ```
 
-**Update status:**
+**Add a subtask to a parent (by id):**
 ```
-/conductor:task-tree done "audit memorie-active"
-/conductor:task-tree run "hub submit implementation"
-/conductor:task-tree fail "relay integration"
+/conductor:task-tree add-child 1 "subtask A"
+/conductor:task-tree add-child 1 "subtask B"
+```
+
+**Update status (by numeric id or legacy label):**
+```
+/conductor:task-tree done 1
+/conductor:task-tree run 2
+/conductor:task-tree fail 3
 ```
 
 **Clear all tasks (end of session):**
@@ -34,31 +41,43 @@ Track active tasks as a visual ASCII tree during your session.
 
 ```
 Session tasks
-├── ✓ [done   ] audit memorie-active
-├── ✓ [done   ] blueprint pre-push-cohesion-check
-├── ◎ [running] hub submit implementation
-└── ○ [pending] gate out
+[○]  1 — audit memorie-active
+  [●]  2 — subtask A
+  [○]  3 — subtask B
+[○]  4 — gate out
 
 ```
 
-## Auto-registration with /conductor:dispatch
+Icons: `○` pending · `◎` running · `●` done · `✗` failed
 
-When you dispatch a task, manually add it to the tree:
+## Data model
+
+Each task: `{ id, label, status, ts, children: [] }`
+
+IDs are auto-increment integers (1, 2, 3…) stored in the JSON.
+Children can be nested to any depth.
+
+## Backward compatibility
+
+- `add <label>` — unchanged
+- `done <label>` — still works by label (fallback after id lookup fails)
+- `clear` — unchanged
+
+## Auto-registration with /conductor:dispatch
 
 ```
 /conductor:task-tree add "matos → Auth refactor"
 /conductor:dispatch matos "Auth refactor"
-/conductor:task-tree run "matos → Auth refactor"
-```
+/conductor:task-tree run 1
 
-On completion:
-```
-/conductor:task-tree done "matos → Auth refactor"
-```
+# Add sub-tasks as work is broken down:
+/conductor:task-tree add-child 1 "write tests"
+/conductor:task-tree add-child 1 "refactor service"
 
-Or if the dispatch fails:
-```
-/conductor:task-tree fail "matos → Auth refactor"
+# On completion:
+/conductor:task-tree done 2
+/conductor:task-tree done 3
+/conductor:task-tree done 1
 ```
 
 ## Status icons and meanings
@@ -67,58 +86,30 @@ Or if the dispatch fails:
 |------|--------|---------|
 | ○ | `pending` | Not yet started |
 | ◎ | `running` | In progress |
-| ✓ | `done` | Completed successfully |
+| ● | `done` | Completed successfully |
 | ✗ | `failed` | Failed or blocked |
 
 ## Storage
 
-Tasks persist to `~/.claude/conductor/task-tree.json` between prompts in the same session.
+Tasks persist to `~/.claude/conductor/task-tree.json` across prompts.
+Directory is created automatically if absent.
+
+Format:
+```json
+{
+  "nextId": 4,
+  "tasks": [
+    {
+      "id": 1,
+      "label": "audit memorie-active",
+      "status": "pending",
+      "ts": "2026-06-23T10:00:00.000Z",
+      "children": [
+        { "id": 2, "label": "subtask A", "status": "done", "ts": "...", "children": [] }
+      ]
+    }
+  ]
+}
+```
 
 Use `/conductor:task-tree clear` to reset the tree at the end of a session.
-
-## Examples
-
-### Multi-task session
-
-```bash
-/conductor:task-tree add "dispatch audit on memorie-active"
-/conductor:task-tree add "run security-reviewer on plugin.json"
-/conductor:task-tree add "conduct pre-push cohesion check"
-/conductor:task-tree add "gate out and archive session"
-
-/conductor:task-tree  # Show current state
-
-# After audit completes:
-/conductor:task-tree done "dispatch audit on memorie-active"
-/conductor:task-tree run "run security-reviewer on plugin.json"
-
-# ... later ...
-/conductor:task-tree done "run security-reviewer on plugin.json"
-```
-
-### Dispatch tracking
-
-```bash
-# Start dispatch
-/conductor:task-tree add "matos → refactor auth module"
-/conductor:dispatch matos "Refactor auth module"
-/conductor:task-tree run "matos → refactor auth module"
-
-# Agent returns with result
-/conductor:task-tree done "matos → refactor auth module"
-```
-
-## Troubleshooting
-
-**Task not found error**
-
-If you see `Task '<label>' not found.`, ensure:
-- The label matches exactly (case-sensitive)
-- Quotes are consistent
-- Use the full label including agent prefix if you used it
-
-**Task tree looks empty**
-
-The file persists in `~/.claude/conductor/task-tree.json`. Check:
-- Current session has no tasks yet (add some!)
-- If you cleared the tree earlier, use `add` to recreate tasks

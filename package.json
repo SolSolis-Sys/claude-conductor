@@ -5,7 +5,8 @@
   "license": "MIT",
   "author": "SolSolis-Sys",
   "scripts": {
-    "test": "node test/worktree-manager.test.js",
+    "test": "node test/worktree-manager.test.js && node test/task-tree.test.js",
+    "test:task-tree": "node test/task-tree.test.js",
     "conductor-hub": "node scripts/hub.js"
   }
 }
