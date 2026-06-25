@@ -12,7 +12,7 @@
 const path = require('path');
 const os   = require('os');
 const fs   = require('fs');
-const { executeTool, listTools } = require(path.join(__dirname, '..', 'lib', 'tool-registry'));
+const { executeTool, listTools, setProjectRoot } = require(path.join(__dirname, '..', 'lib', 'tool-registry'));
 
 // ── Test harness ───────────────────────────────────────────────────────────
 
@@ -53,6 +53,7 @@ const TMP = path.join(os.tmpdir(), 'conductor-tool-registry-test-' + process.pid
 test('Test 1: listTools() returns the 7 expected tools', () => {
   const tools = listTools();
   const expected = ['write_file', 'read_file', 'update_context', 'run_shell', 'git_add', 'git_commit', 'git_stash'];
+  // Note: setProjectRoot is not a tool — listTools() returns TOOLS keys only
 
   assert(Array.isArray(tools), 'listTools() should return an array');
   assertEqual(tools.length, expected.length, `should have ${expected.length} tools`);
@@ -182,6 +183,42 @@ test('Test 9: run_shell accepts whitelisted command "git"', () => {
   assert(result.stdout.includes('git'), 'stdout should contain git version info');
 });
 
+// ── Test 10: write_file — chemin valide dans le projet → succès ───────────
+
+test('Test 10: write_file — chemin valide dans le projet → succès', () => {
+  // _projectRoot is TMP; writing inside TMP is allowed
+  const filePath = path.join(TMP, 'security-valid.txt');
+  const result = executeTool('write_file', { path: filePath, content: 'valid' });
+  assert(result.success === true, 'write inside project root should succeed');
+  assert(fs.existsSync(filePath), 'file should exist on disk');
+});
+
+// ── Test 11: write_file — traversal ../../etc/passwd → rejeté ────────────
+
+test('Test 11: write_file — path traversal ../../etc/passwd → rejeté', () => {
+  // Relative traversal resolves outside TMP → must throw
+  const malicious = path.join(TMP, '..', '..', 'etc', 'passwd');
+  assertThrows(
+    () => executeTool('write_file', { path: malicious, content: 'pwned' }),
+    'hors projet',
+    'write_file with traversal path should throw "hors projet"'
+  );
+});
+
+// ── Test 12: write_file — chemin absolu hors projet → rejeté ─────────────
+
+test('Test 12: write_file — chemin absolu hors projet → rejeté', () => {
+  // Absolute path clearly outside TMP
+  const outside = path.resolve(os.tmpdir(), 'conductor-outside-' + process.pid + '.txt');
+  // Ensure it is NOT inside TMP (TMP is a subdir of tmpdir with pid suffix)
+  assert(!outside.startsWith(TMP), 'test setup: outside path must not be inside TMP');
+  assertThrows(
+    () => executeTool('write_file', { path: outside, content: 'pwned' }),
+    'hors projet',
+    'write_file with absolute path outside project should throw "hors projet"'
+  );
+});
+
 // ── Cleanup ────────────────────────────────────────────────────────────────
 
 function cleanup() {
@@ -194,6 +231,9 @@ function cleanup() {
 
 // Create TMP before tests that write files
 try { fs.mkdirSync(TMP, { recursive: true }); } catch (_) {}
+
+// Allow write_file to write into TMP (path-traversal guard uses _projectRoot)
+setProjectRoot(TMP);
 
 console.log('\nTool-Registry Test Suite\n' + '='.repeat(40));
 

@@ -12,6 +12,7 @@
 const path = require('path');
 const { resolveVariables, validateGates, dryRun } = require(path.join(__dirname, '..', 'lib', 'runner'));
 const { _resolveBlueprint } = require(path.join(__dirname, '..', 'lib', 'runner'));
+const { setRoots, clearCache } = require(path.join(__dirname, '..', 'lib', 'resolver'));
 
 // ── Test harness ───────────────────────────────────────────────────────────
 
@@ -229,6 +230,102 @@ test('Additional: unknown schema_version → warning issued', () => {
   assert(w.includes('2.0.0'), 'warning includes unknown version');
   assert(w.toLowerCase().includes('inconnue') || w.toLowerCase().includes('unknown') || w.toLowerCase().includes('tentative'),
     'warning mentions unknown/coercion attempt');
+});
+
+// ── ref: resolution tests ──────────────────────────────────────────────────
+
+const FIXTURES = 'D:/Github-repo/conductor-blueprints';
+
+test('ref: agent gate → résolu avec id/type/prompt', () => {
+  clearCache();
+  setRoots({ blueprints: FIXTURES });
+
+  const bp = {
+    name: 'ref-agent-test',
+    schema_version: '1.1.0',
+    gates: [
+      { id: 'placeholder', type: 'agent', ref: 'agents/scope-guardian' }
+    ]
+  };
+
+  silenceLog();
+  const result = _resolveBlueprint(bp);
+  restoreLog();
+
+  const gate = result.gates[0];
+  assertEqual(gate.id,   'scope-guardian',              'id from artefact');
+  assertEqual(gate.type, 'agent',                       'type from artefact');
+  assert(gate.prompt && typeof gate.prompt === 'string', 'prompt from artefact');
+});
+
+test('ref: tool gate → type forcé "tool"', () => {
+  clearCache();
+  setRoots({ blueprints: FIXTURES });
+
+  const bp = {
+    name: 'ref-tool-test',
+    schema_version: '1.1.0',
+    gates: [
+      { id: 'placeholder', type: 'agent', ref: 'tools/read_file' }
+    ]
+  };
+
+  silenceLog();
+  const result = _resolveBlueprint(bp);
+  restoreLog();
+
+  const gate = result.gates[0];
+  assertEqual(gate.id,   'read_file', 'id from artefact');
+  assertEqual(gate.type, 'tool',      'type forced tool');
+  assert(gate.params && typeof gate.params === 'object', 'params from artefact');
+});
+
+test('ref: gate prompt override écrase prompt artefact', () => {
+  clearCache();
+  setRoots({ blueprints: FIXTURES });
+
+  const bp = {
+    name: 'ref-override-test',
+    schema_version: '1.1.0',
+    gates: [
+      { id: 'placeholder', type: 'agent', ref: 'agents/scope-guardian', prompt: 'Custom override prompt' }
+    ]
+  };
+
+  silenceLog();
+  const result = _resolveBlueprint(bp);
+  restoreLog();
+
+  const gate = result.gates[0];
+  assertEqual(gate.id,     'scope-guardian',    'id still from artefact');
+  assertEqual(gate.prompt, 'Custom override prompt', 'gate prompt overrides artefact');
+});
+
+test('ref: invalide → erreur propagée', () => {
+  clearCache();
+  setRoots({ blueprints: FIXTURES });
+
+  const bp = {
+    name: 'ref-invalid-test',
+    schema_version: '1.1.0',
+    gates: [
+      { id: 'x', type: 'agent', ref: 'agents/does-not-exist' }
+    ]
+  };
+
+  silenceLog();
+  let threw = false;
+  let errMsg = '';
+  try {
+    _resolveBlueprint(bp);
+  } catch (e) {
+    threw = true;
+    errMsg = e.message;
+  } finally {
+    restoreLog();
+  }
+  assert(threw, 'should throw for unknown ref');
+  assert(errMsg.includes('does-not-exist'), 'error mentions missing ref');
 });
 
 // ── Run ─────────────────────────────────────────────────────────────────────
