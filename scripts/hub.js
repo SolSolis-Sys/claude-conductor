@@ -15,7 +15,7 @@ if ((subcmd === 'install' || subcmd === 'info') && arg && !NAME_RE_CLI.test(arg)
   process.exit(1);
 }
 if (subcmd === 'install' && !arg) {
-  console.error('conductor hub install: missing blueprint name. Usage: conductor hub install <name>');
+  console.error('conductor hub install: missing blueprint name. Usage: conductor hub install <name> [--no-deps]');
   process.exit(1);
 }
 if (subcmd === 'submit' && !arg && !extra.includes('--interactive')) {
@@ -31,7 +31,8 @@ if (subcmd === 'list') {
 } else if (subcmd === 'search') {
   hub.search(arg).catch(console.error);
 } else if (subcmd === 'install' && arg) {
-  hub.install(arg).catch((e) => {
+  const options = { deps: !extra.includes('--no-deps') };
+  hub.install(arg, options).catch((e) => {
     console.error(`conductor hub error: ${e.message}`);
     process.exit(1);
   });
@@ -61,7 +62,7 @@ if (subcmd === 'list') {
   console.log('Commands:');
   console.log('  list                      Show available blueprints from the catalog');
   console.log('  search <query>            Search blueprints by name, tag or description');
-  console.log('  install <name>            Install a blueprint locally');
+  console.log('  install <name> [--no-deps] Install a blueprint locally (--no-deps skips dependencies)');
   console.log('  info <name>               Show blueprint details');
   console.log('  discover                  Interactive blueprint discovery assistant');
   console.log('  submit <path>             Submit a local blueprint to the community registry');
