@@ -1,5 +1,14 @@
 # Changelog — Git Worktree Integration (Issue #1)
 
+## [0.1.10] — 2026-06-25
+
+### Changed
+- Sync `plugin.json` version to match `package.json` (was out of sync after v0.1.9 bump)
+- README badge corrected to display current version `0.1.10`
+
+### Chore
+- Git tags `v0.1.8`, `v0.1.9`, `v0.1.10` created and pushed to origin
+
 ## [0.1.9] — 2026-06-25
 
 ### Added — Release 1 (v1.1) : Runner + Coercion + Validation
