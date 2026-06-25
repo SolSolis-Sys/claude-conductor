@@ -1,6 +1,6 @@
 {
   "name": "claude-conductor",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Orchestration primitives for multi-agent Claude Code workflows",
   "license": "MIT",
   "author": "SolSolis-Sys",

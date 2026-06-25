@@ -102,6 +102,7 @@ function restoreProcessExit() {
 
 const hub = require(path.join(__dirname, '..', 'lib', 'hub'));
 const { resolveDependencies } = require(path.join(__dirname, '..', 'lib', 'dependency-resolver'));
+const { validateBlueprint } = hub;
 
 // ── Helper: build a fake HTTPS response stream ────────────────────────────
 
@@ -410,6 +411,61 @@ test('Test 9: validateBlueprint — commande destructive bloquée', async () => 
     msg.includes('destructive') || msg.includes('process.exit'),
     `error should mention destructive or exit, got: ${caughtError.message}`
   );
+});
+
+// A1 — validateBlueprint: non-string name → throw
+test('validateBlueprint throws on non-string name', () => {
+  assertThrows(
+    () => validateBlueprint({ name: 123, version: '1.0.0', agents: [{ id: 'a', uses: 'x' }] }, 'test-bp'),
+    'has invalid name or version',
+    'non-string name should throw'
+  );
+});
+
+// A1 — validateBlueprint: non-string version → throw
+test('validateBlueprint throws on non-string version', () => {
+  assertThrows(
+    () => validateBlueprint({ name: 'test-bp', version: null, agents: [{ id: 'a', uses: 'x' }] }, 'test-bp'),
+    'has invalid name or version',
+    'non-string version should throw'
+  );
+});
+
+// A3 — install: skip if same version already present
+test('install skips if same version already present', async () => {
+  // Mock fs.readFileSync to simulate an already-installed blueprint
+  const originalReadFileSync = fs.readFileSync.bind(fs);
+  const existingBp = { name: 'cached-bp', version: '2.0.0', agents: [{ id: 'a', uses: 'x' }] };
+
+  fs.readFileSync = (p, enc) => {
+    if (typeof p === 'string' && p.includes('cached-bp') && p.includes('blueprint.json')) {
+      return JSON.stringify(existingBp);
+    }
+    return originalReadFileSync(p, enc);
+  };
+
+  stubProcessExit();
+  const logMessages = [];
+  const originalLog = console.log.bind(console);
+  console.log = (...args) => { logMessages.push(args.join(' ')); };
+
+  try {
+    // Serve the same version from "remote"
+    mockHttpsGet((url, cb) => {
+      const res = makeFakeResponse(200, JSON.stringify(existingBp));
+      cb(res);
+      return makeFakeRequest();
+    });
+    await hub.install('cached-bp');
+  } finally {
+    fs.readFileSync = originalReadFileSync;
+    console.log = originalLog;
+    restoreHttpsGet();
+    restoreProcessExit();
+  }
+
+  const skipped = logMessages.some((m) => m.includes('already installed'));
+  assert(skipped, `install should log "already installed" when version matches, got: ${JSON.stringify(logMessages)}`);
 });
 
 // ── Cleanup ────────────────────────────────────────────────────────────────
