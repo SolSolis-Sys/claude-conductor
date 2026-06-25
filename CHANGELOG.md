@@ -1,5 +1,25 @@
 # Changelog — Git Worktree Integration (Issue #1)
 
+## [0.1.9] — 2026-06-25
+
+### Added — Release 1 (v1.1) : Runner + Coercion + Validation
+- `lib/coercion.js` — 10 règles coercion agents[]→gates[] (fonction pure, zero-dependency)
+- `lib/validator.js` — JSON Schema draft-07 hand-rolled (type/required/properties/enum/min/max)
+- `lib/runner.js` — loadBlueprint(), validateGates(), resolveVariables(), dryRun(), validateInterGate(), validateLoop()
+
+### Added — Release 2 (v1.2) : on_fail + Tool gates
+- `lib/on-fail.js` — stop/retry(N)/fallback/log_only/skip + on_exhausted pattern
+- `lib/tool-registry.js` — write_file/read_file/update_context/run_shell/git_add/git_commit/git_stash
+
+### Fixed
+- `lib/on-fail.js` : off-by-one retry — attempt <= maxRetries (le dernier retry était ignoré)
+- `lib/coercion.js` : gates.length >= 0 → > 0 (agents ignorés si gates: [] vide)
+- `lib/runner.js` : isV11 accepte schema_version "1.1" sans patch (regex élargie)
+- `lib/tool-registry.js` : run_shell whitelist [git, node, npm, npx, python, python3, pip, pip3]
+
+### Tests
+- 76/76 PASS (coercion×21 + validator + runner×10 + on-fail×12 + tool-registry×9 + task-tree×14 + worktree×10)
+
 ## [0.1.7] — 2026-06-21
 
 ### Changed

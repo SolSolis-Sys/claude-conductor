@@ -4,7 +4,7 @@
 
 > Multi-agent orchestration plugin for Claude Code — dispatch agents, run parallel audits, manage blueprints, and automate context cleanup.
 
-![Version](https://img.shields.io/badge/version-0.1.7-blue)
+![Version](https://img.shields.io/badge/version-0.1.9-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 
@@ -26,6 +26,16 @@
 - **Agent scoring** — static keyword scoring recommends the top-3 agents for any task description
 - **Metrics integration** — reads token-watch data to suggest `/compact` at 90% context
 - **Zero dependencies** — pure Node.js built-ins only
+
+## Library (lib/)
+
+The core orchestration primitives are available as a reusable library:
+
+- **`lib/coercion.js`** — Coerce agent config (agents[], skills[]) into deterministic gates[] (10 rules, pure function, zero-dependency)
+- **`lib/validator.js`** — JSON Schema draft-07 validation hand-rolled (zero-dependency, supports type/required/properties/enum/min/max)
+- **`lib/runner.js`** — Blueprint execution engine (loadBlueprint, validateGates, dryRun, validateInterGate, validateLoop)
+- **`lib/on-fail.js`** — on_fail engine (stop/retry/fallback/skip/log_only + on_exhausted pattern)
+- **`lib/tool-registry.js`** — Tool gates registry (write_file, read_file, update_context, run_shell with whitelist, git_add, git_commit, git_stash)
 
 ## Install
 
