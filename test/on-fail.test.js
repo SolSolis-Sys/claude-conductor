@@ -72,22 +72,34 @@ test('Test 3: action retry, attempt 1/3 → retry', () => {
   assert(!result.target, 'no target for retry');
 });
 
-// ── Test 4: action retry, attempt 3/3 exhausted → stop (no on_exhausted) ──
+// ── Test 4: action retry, attempt 3/3 → still retry (attempt <= maxRetries) ─
 
-test('Test 4: action retry, attempt 3/3 exhausted → stop (no on_exhausted)', () => {
+test('Test 4: action retry, attempt 3/3 → retry (attempt <= maxRetries)', () => {
   const ctx = { attempt: 3, gates: [], currentIndex: 0 };
   silenceWarn();
   const result = resolveOnFail({ action: 'retry', max_retries: 3 }, 'g4-test', DUMMY_ERROR, ctx);
   restoreWarn();
 
-  assertEqual(result.action, 'stop', 'exhausted retry without on_exhausted → stop');
+  assertEqual(result.action, 'retry', 'attempt=3 <= max_retries=3 → still retry');
+  assert(!result.target, 'no target');
+});
+
+// ── Test 4b: action retry, attempt 4/3 exhausted → stop (no on_exhausted) ──
+
+test('Test 4b: action retry, attempt 4/3 exhausted → stop (no on_exhausted)', () => {
+  const ctx = { attempt: 4, gates: [], currentIndex: 0 };
+  silenceWarn();
+  const result = resolveOnFail({ action: 'retry', max_retries: 3 }, 'g4b-test', DUMMY_ERROR, ctx);
+  restoreWarn();
+
+  assertEqual(result.action, 'stop', 'attempt=4 > max_retries=3 → exhausted → stop');
   assert(!result.target, 'no target');
 });
 
 // ── Test 5: retry exhausted + on_exhausted fallback → fallback + target ────
 
 test('Test 5: retry exhausted + on_exhausted fallback → fallback + target', () => {
-  const ctx = { attempt: 3, gates: [], currentIndex: 0 };
+  const ctx = { attempt: 4, gates: [], currentIndex: 0 };
   const onFail = {
     action:      'retry',
     max_retries: 3,
@@ -152,6 +164,17 @@ test('Test 8: action skip → skip', () => {
 
   assertEqual(result.action, 'skip', 'action skip should return skip');
   assert(!result.target, 'no target');
+});
+
+// ── Test 8b: retry, attempt=1, max_retries=1 → retry (was broken before fix) ─
+
+test('Test 8b: retry, attempt=1, max_retries=1 → retry', () => {
+  const ctx = { attempt: 1, gates: [], currentIndex: 0 };
+  silenceWarn();
+  const result = resolveOnFail({ action: 'retry', max_retries: 1 }, 'g8b-test', DUMMY_ERROR, ctx);
+  restoreWarn();
+
+  assertEqual(result.action, 'retry', 'attempt=1 <= max_retries=1 → retry (off-by-one fix)');
 });
 
 // ── Test 9: logOnFail produces correct format ──────────────────────────────

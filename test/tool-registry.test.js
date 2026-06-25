@@ -152,6 +152,36 @@ test('Test 7: update_context stores key-value pair', () => {
   assert(result.value.nested === true, 'result.value content should be preserved');
 });
 
+// ── Test 8: run_shell rejects commands not in whitelist ───────────────────
+
+test('Test 8: run_shell rejects non-whitelisted commands', () => {
+  assertThrows(
+    () => executeTool('run_shell', { command: 'curl', args: ['https://example.com'] }),
+    'commande non autorisée',
+    'run_shell with non-whitelisted command should throw'
+  );
+
+  // Error message should mention the command and list allowed ones
+  let errorMsg = '';
+  try {
+    executeTool('run_shell', { command: 'rm', args: ['-rf', '/'] });
+  } catch (e) {
+    errorMsg = e.message;
+  }
+  assert(errorMsg.includes('rm'), 'error should mention the rejected command');
+  assert(errorMsg.includes('git'), 'error should list allowed commands');
+});
+
+// ── Test 9: run_shell accepts whitelisted commands ────────────────────────
+
+test('Test 9: run_shell accepts whitelisted command "git"', () => {
+  // "git --version" is safe and always available
+  const result = executeTool('run_shell', { command: 'git', args: ['--version'] });
+  assert(result.success === true, 'run_shell with "git" should succeed');
+  assert(typeof result.stdout === 'string', 'stdout should be a string');
+  assert(result.stdout.includes('git'), 'stdout should contain git version info');
+});
+
 // ── Cleanup ────────────────────────────────────────────────────────────────
 
 function cleanup() {
