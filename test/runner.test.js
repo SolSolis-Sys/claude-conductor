@@ -234,11 +234,19 @@ test('Additional: unknown schema_version → warning issued', () => {
 
 // ── ref: resolution tests ──────────────────────────────────────────────────
 
-const FIXTURES = 'D:/Github-repo/conductor-blueprints';
+const TMP_REF = require('fs').mkdtempSync(require('path').join(require('os').tmpdir(), 'runner-ref-'));
+require('fs').mkdirSync(require('path').join(TMP_REF, 'agents', 'scope-guardian'), { recursive: true });
+require('fs').writeFileSync(require('path').join(TMP_REF, 'agents', 'scope-guardian', 'agent.json'), JSON.stringify({
+  id: 'scope-guardian', type: 'agent', role: 'security scanner', prompt: 'Check {{blueprint}} for issues'
+}));
+require('fs').mkdirSync(require('path').join(TMP_REF, 'tools', 'read_file'), { recursive: true });
+require('fs').writeFileSync(require('path').join(TMP_REF, 'tools', 'read_file', 'tool.json'), JSON.stringify({
+  id: 'read_file', type: 'tool', params: { path: { type: 'string' } }, output_schema: {}
+}));
 
 test('ref: agent gate → résolu avec id/type/prompt', () => {
   clearCache();
-  setRoots({ blueprints: FIXTURES });
+  setRoots({ blueprints: TMP_REF });
 
   const bp = {
     name: 'ref-agent-test',
@@ -260,7 +268,7 @@ test('ref: agent gate → résolu avec id/type/prompt', () => {
 
 test('ref: tool gate → type forcé "tool"', () => {
   clearCache();
-  setRoots({ blueprints: FIXTURES });
+  setRoots({ blueprints: TMP_REF });
 
   const bp = {
     name: 'ref-tool-test',
@@ -282,7 +290,7 @@ test('ref: tool gate → type forcé "tool"', () => {
 
 test('ref: gate prompt override écrase prompt artefact', () => {
   clearCache();
-  setRoots({ blueprints: FIXTURES });
+  setRoots({ blueprints: TMP_REF });
 
   const bp = {
     name: 'ref-override-test',
@@ -303,7 +311,7 @@ test('ref: gate prompt override écrase prompt artefact', () => {
 
 test('ref: invalide → erreur propagée', () => {
   clearCache();
-  setRoots({ blueprints: FIXTURES });
+  setRoots({ blueprints: TMP_REF });
 
   const bp = {
     name: 'ref-invalid-test',
@@ -347,4 +355,5 @@ for (const t of tests) {
 console.log('\n' + '='.repeat(40));
 console.log(`Total: ${passed} passed, ${failed} failed\n`);
 
+try { require('fs').rmSync(TMP_REF, { recursive: true, force: true }); } catch(_) {}
 process.exit(failed > 0 ? 1 : 0);
