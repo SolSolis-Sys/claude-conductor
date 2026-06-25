@@ -5,7 +5,7 @@
   "license": "MIT",
   "author": "SolSolis-Sys",
   "scripts": {
-    "test": "node test/worktree-manager.test.js && node test/task-tree.test.js && node test/coercion.test.js && node test/runner.test.js && node test/on-fail.test.js && node test/tool-registry.test.js && node test/resolver.test.js && node test/metrics.test.js && node test/skill-loader.test.js",
+    "test": "node test/worktree-manager.test.js && node test/task-tree.test.js && node test/coercion.test.js && node test/runner.test.js && node test/on-fail.test.js && node test/tool-registry.test.js && node test/resolver.test.js && node test/metrics.test.js && node test/skill-loader.test.js && node test/hub.test.js",
     "test:task-tree": "node test/task-tree.test.js",
     "test:coercion": "node test/coercion.test.js",
     "test:runner": "node test/runner.test.js",
