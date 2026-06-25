@@ -5,12 +5,15 @@
   "license": "MIT",
   "author": "SolSolis-Sys",
   "scripts": {
-    "test": "node test/worktree-manager.test.js && node test/task-tree.test.js && node test/coercion.test.js && node test/runner.test.js && node test/on-fail.test.js && node test/tool-registry.test.js",
+    "test": "node test/worktree-manager.test.js && node test/task-tree.test.js && node test/coercion.test.js && node test/runner.test.js && node test/on-fail.test.js && node test/tool-registry.test.js && node test/resolver.test.js && node test/metrics.test.js && node test/skill-loader.test.js",
     "test:task-tree": "node test/task-tree.test.js",
     "test:coercion": "node test/coercion.test.js",
     "test:runner": "node test/runner.test.js",
     "test:on-fail": "node test/on-fail.test.js",
     "test:tool-registry": "node test/tool-registry.test.js",
+    "test:resolver": "node test/resolver.test.js",
+    "test:metrics": "node test/metrics.test.js",
+    "test:skill-loader": "node test/skill-loader.test.js",
     "conductor-hub": "node scripts/hub.js"
   }
 }
