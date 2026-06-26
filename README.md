@@ -25,6 +25,7 @@
 - **Blueprint submission** — `hub submit <path>` validates a local blueprint and opens a GitHub Issue for community review
 - **Agent scoring** — static keyword scoring recommends the top-3 agents for any task description
 - **Metrics integration** — reads token-watch data to suggest `/compact` at 90% context
+- **Calendar** — inter-session agenda with autonomous event injection (Stop hook) and 5-minute throttle
 - **Zero dependencies** — pure Node.js built-ins only
 
 ## Library (lib/)
@@ -187,6 +188,35 @@ Browse, search and install community blueprints at:
 **[conductor-blueprints hub →](https://solsolis-sys.github.io/conductor-blueprints/)**
 
 Click **Install** on any blueprint to copy its URL, then reference it in your workflow.
+
+## Calendar (v0.1.11)
+
+Track work events across sessions. Events are stored in `~/.claude/conductor-calendar/agenda.json` and injected automatically as a system message at each session close (Stop hook) when events are within 2 hours.
+
+**Agenda file** (managed by hooks — direct editing supported):
+```json
+{
+  "version": "1.0",
+  "events": [
+    {
+      "id": "<uuid>",
+      "title": "Sprint planning",
+      "start": "2026-06-27T10:00:00Z",
+      "done": false,
+      "tags": ["project"]
+    }
+  ]
+}
+```
+
+**Automatic behaviors:**
+- **SessionStart** — creates `~/.claude/conductor-calendar/` and `agenda.json` if absent (idempotent)
+- **Stop** — injects upcoming events (2h window, max 2) as system message; throttled to once per 5 minutes; auto-prunes done + events older than 24h
+
+**Commands** — available in v0.1.12 (Phase 1):
+- `/conductor:calendar:add "<title>" "<ISO8601>"` — add event
+- `/conductor:calendar:list [today|week|all]` — list events
+- `/conductor:calendar:done <id>` — mark event done
 
 ## Context Guard
 
