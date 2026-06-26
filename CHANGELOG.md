@@ -1,5 +1,21 @@
 # Changelog — Git Worktree Integration (Issue #1)
 
+## [0.1.11] — 2026-06-26
+
+### Added — Calendar Phase 0 (Hook-only)
+- `lib/calendar.js` — CRUD library for agenda.json: `readAgenda`, `writeAgenda`, `addEvent`, `getUpcoming`, `listEvents`, `markDone`, `pruneOld`, `formatSystemMessage`. Zero external dependencies (stdlib: fs, path, os, crypto). Supports `CONDUCTOR_CALENDAR_DIR` env var for test isolation.
+- `hooks/calendar-setup.js` — SessionStart hook: creates `~/.claude/conductor-calendar/` and initializes `agenda.json` if absent. Idempotent, always exits 0.
+- `hooks/calendar-poller.js` — Stop hook: reads upcoming events (2h window), injects `systemMessage` if events found and throttle OK (5 min). Updates `.last-inject`. Auto-prunes done + expired (>24h) events. Always exits 0.
+- `hooks/hooks.json` — Added `calendar-setup` to SessionStart, `calendar-poller` to Stop.
+- 9 test files in `test/`: `calendar-read-write.test.js`, `calendar-add-event.test.js`, `calendar-get-upcoming.test.js`, `calendar-list-events.test.js`, `calendar-mark-done.test.js`, `calendar-prune-old.test.js`, `calendar-format.test.js`, `hook-setup.test.js`, `hook-poller.test.js`.
+
+### Design decisions
+- ADR-01: Hook `Stop` (not `UserPromptSubmit`) for autonomous event injection
+- ADR-02: JSON file storage at `~/.claude/conductor-calendar/agenda.json` (no external DB)
+- ADR-03: Max 2 events, compact `[YYYY-MM-DD HH:MM] title` format (UTC)
+- ADR-04: 5-minute throttle via `.last-inject` timestamp file
+- ADR-05: Auto-prune on every Stop (done events + events >24h old)
+
 ## [0.1.10] — 2026-06-25
 
 ### Changed
