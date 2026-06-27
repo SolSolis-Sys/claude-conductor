@@ -4,7 +4,7 @@
 
 > Multi-agent orchestration plugin for Claude Code — dispatch agents, run parallel audits, manage blueprints, and automate context cleanup.
 
-![Version](https://img.shields.io/badge/version-0.1.10-blue)
+![Version](https://img.shields.io/badge/version-0.1.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 
@@ -94,6 +94,9 @@ Launches three Explore agents in parallel and synthesizes findings into a single
 | `/conductor:dispatch <task>` | Generate a structured dispatch prompt with registry recommendations |
 | `/conductor:audit <target>` | Run 3-perspective parallel audit on a path or codebase |
 | `/conductor:loop <pattern>` | Reference loop patterns (count / dry / budget) |
+| `/conductor:calendar:add <title> <isoStart> [tags]` | Add event to agenda (ISO 8601 start, optional comma-separated tags) |
+| `/conductor:calendar:list [today\|week\|all]` | List non-done events (filtered by today, next 7d, or all) |
+| `/conductor:calendar:done <eventId>` | Mark event done (full UUID or 8-char prefix) |
 
 ## Hub Commands
 

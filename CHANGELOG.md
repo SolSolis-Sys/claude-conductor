@@ -1,5 +1,25 @@
 # Changelog — Git Worktree Integration (Issue #1)
 
+## [0.1.13] — 2026-06-27
+
+### Fixed
+- `hub.js` — `validateBlueprint` accepts `gates[]` field for blueprint v1.1 compatibility
+- `runner.js` — `dryRun` coerces `agents[]` to `gates[]` via `_resolveBlueprint`
+
+### Docs / Skills
+- `blueprint-creator` skill bumped to v2.0 — gates[] v1.1 schema, dynamic `ref:` resolution, Golden Flux Rule documented
+
+## [0.1.12] — 2026-06-27
+
+### Added — Calendar Phase 1 (Commands)
+- `commands/calendar.md` — skill/command definition for `calendar:add`, `calendar:list`, `calendar:done` with YAML frontmatter + usage examples.
+- `scripts/calendar-commands.js` — Node.js dispatcher invoked by the command. Reads `process.argv[2]` for sub-command.
+  - `calendar:add <title> <isoStart> [tags]` — validates title + ISO8601, writes event, prints UUID + formatted start.
+  - `calendar:list [today|week|all]` — renders ASCII table with 8-char ID, UTC start, title, tags. Filters: today (UTC 00:00–23:59), week (now + 7d), all (default).
+  - `calendar:done <eventId>` — fuzzy-match full UUID or 8-char prefix, marks done, prunes, prints count.
+- 3 test files in `test/`: `cmd-calendar-add.test.js` (4 tests), `cmd-calendar-list.test.js` (4 tests), `cmd-calendar-done.test.js` (4 tests). All spawn subprocess with `CONDUCTOR_CALENDAR_DIR` pointing to temp dir.
+- `package.json` — `test:cmd-calendar` script added; Phase 1 tests appended to `test` script.
+
 ## [0.1.11] — 2026-06-26
 
 ### Added — Calendar Phase 0 (Hook-only)
