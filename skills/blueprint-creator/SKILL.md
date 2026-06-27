@@ -1,66 +1,184 @@
 ---
-description: Guide step-by-step creation of a conductor blueprint: analyze workflow → generate blueprint.json → validate schema → create README.md → update catalog.json → submit PR. Use when a user wants to create and publish a new conductor blueprint.
+description: Guide step-by-step creation of a conductor blueprint v1.1: analyze workflow → generate blueprint.json (gates[]) → validate schema → create README.md → submit via hub. Use when a user wants to create and publish a new conductor blueprint.
 origin: conductor-blueprints
 tools: Read, Write, Edit, Bash, Glob, Grep
 categorie: orchestration
-version: 1.0.0
+version: 2.0.0
 ---
 
-# Blueprint Creator
+# Blueprint Creator v2.0
 
-Guides the creation of a new conductor blueprint from workflow description to ready-to-submit PR.
+Guides the creation of a new conductor blueprint v1.1 (gates[]) from workflow description to hub submission.
+
+## Format cible : blueprint v1.1 (gates[])
+
+Toujours générer un blueprint v1.1 avec `gates[]` (pas `agents[]`).
+Schema: `https://raw.githubusercontent.com/SolSolis-Sys/conductor-blueprints/main/schemas/blueprint.v1.1.json`
 
 ## Process
 
 ### Step 1 — Analyze Workflow
-Read user's workflow description. Extract:
-- Number of agents needed (and their roles)
-- Loop pattern (rounds, exit condition)
+
+Extract from user's description:
+- Gates needed and their types (`agent` = LLM, `tool` = déterministe/zéro token)
+- Inter-gate data flow (`{{gate-id.field}}` cross-references)
+- Loop pattern (exit_condition, max_rounds)
 - Required inputs (user-provided variables)
-- Cost estimate (low <10k tokens, medium 10-100k, high >100k)
+- Cost estimate: count agent gates × ~10k tokens × $0.003/1k
+
+**Golden Flux Rule**: opérations déterministes (grep, cat, validation JSON) → gate `tool`. Raisonnement et jugement → gate `agent`. Ne pas envoyer un LLM faire du grep.
 
 ### Step 2 — Generate blueprint.json
-Follow schema: `https://raw.githubusercontent.com/SolSolis-Sys/conductor-blueprints/main/schemas/blueprint.v1.json`
 
-Required fields: id (author/name), name, version, title, description, authors, inputs, cost_profile, permissions, agents, loop
+Required fields: `$schema`, `schema_version`, `id`, `name`, `version`, `title`, `description`, `author`, `license`, `tags`, `inputs`, `cost_profile`, `permissions`, `gates`, `loop`
 
-Template reference: `conductor-blueprints/docs/CREATE-BLUEPRINT.md`
+Template v1.1 minimal:
 
-### Step 3 — Validate Schema
-Check blueprint.json against blueprint.v1.json schema.
-Verify: all required fields present, agent roles unique, exit_condition references valid agent role, cost_profile.tier matches token estimate.
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/SolSolis-Sys/conductor-blueprints/main/schemas/blueprint.v1.1.json",
+  "schema_version": "1.1.0",
+  "id": "github-handle/blueprint-name",
+  "name": "blueprint-name",
+  "version": "0.1.0",
+  "title": "Human Readable Title",
+  "description": "One sentence: what does this blueprint do?",
+  "author": "GitHubHandle",
+  "license": "MIT",
+  "tags": ["tag1", "tag2"],
+  "inputs": [
+    { "name": "input_name", "type": "string", "description": "...", "required": true }
+  ],
+  "cost_profile": {
+    "tier": "low|medium|high",
+    "avg_tokens_per_run": 15000,
+    "estimated_cost_usd": 0.05
+  },
+  "permissions": {
+    "network": false,
+    "filesystem": "read-only|read-write|none",
+    "allowed_commands": []
+  },
+  "gates": [
+    {
+      "id": "gate-kebab-id",
+      "type": "agent",
+      "role": "role-name",
+      "prompt": "Instruction with {{input_name}} and {{previous-gate-id.field}}.",
+      "output_format": "json|text",
+      "output_schema": {
+        "type": "object",
+        "required": ["field"],
+        "properties": { "field": { "type": "string" } }
+      }
+    },
+    {
+      "id": "tool-gate-id",
+      "type": "tool",
+      "command": "cat {{input_path}} 2>/dev/null || echo 'NOT_FOUND'",
+      "timeout_ms": 5000,
+      "on_failure": "continue",
+      "output_var": "file_content"
+    }
+  ],
+  "loop": {
+    "exit_condition": "last-gate produced output",
+    "max_rounds": 1
+  }
+}
+```
+
+### Règles gates[]
+
+| Champ | Requis pour | Notes |
+|-------|-------------|-------|
+| `id` | agent + tool | Unique, kebab-case |
+| `type` | agent + tool | `"agent"` ou `"tool"` |
+| `role` | agent | Kebab-case, identité de l'agent |
+| `prompt` | agent | Supports `{{input_name}}` et `{{gate-id.field}}` |
+| `command` | tool | Shell command ou `conductor://tools/<script>` |
+| `output_format` | agent | `"json"` si `{{gate-id.field}}` utilisé ensuite |
+| `output_schema` | agent json | JSON Schema draft-07, requis si cross-ref |
+| `output_var` | tool | Nom de variable pour stdout (`{{output_var}}`) |
+| `timeout_ms` | tool | Default 5000ms |
+| `on_failure` | tool | `"abort"` (défaut) ou `"continue"` |
+| `condition` | agent + tool | Condition d'exécution ex: `{{g1.status}} == "ok"` |
+
+**Type `"skill"` interdit** — réservé Release 3 (v1.3), pas valide en v1.1.
+
+### Ref: dynamique (optionnel)
+
+Pour réutiliser un agent/tool défini dans le registre `conductor-blueprints/agents/` ou `tools/`:
+
+```json
+{
+  "id": "scrub-gate",
+  "type": "agent",
+  "role": "scrub-checker",
+  "ref": "agents/scrub-checker",
+  "prompt": "Override ou complément optionnel."
+}
+```
+
+Agents disponibles: `scrub-checker`, `spec-reader`, `quality-analyzer`, `smoke-runner`, `schema-validator`, `security-reviewer`, `fixer`, `synthesizer`, `refuter`, etc.
+Lister: `ls conductor-blueprints/agents/` et `conductor-blueprints/tools/`
+
+### Step 3 — Validate
+
+```bash
+# Dry-run via conductor (recommandé)
+cd claude-conductor && node -e "
+const { setRoots } = require('./lib/resolver.js');
+setRoots({ blueprints: 'PATH/TO/conductor-blueprints' });
+const r = require('./lib/runner.js');
+const bp = require('./my-blueprint/blueprint.json');
+r.dryRun(bp, { input_name: 'test_value' });
+"
+```
+
+Vérifier:
+- Nombre de gates affiché = attendu
+- Aucune erreur `ref not found`
+- Variables `{{input_name}}` résolues
+- Warnings inter-gate attendus en dry-run (normaux)
 
 ### Step 4 — Create README.md
-Required (by spec). Include:
+
+Required. Include:
 - Title + 1-line description
 - When to use (trigger conditions)
-- Inputs table (name, type, required, description)
-- Agent flow diagram (text ASCII)
-- Cost estimate
-- Example usage
+- Inputs table (name, type, required, description, default)
+- Gate flow diagram (ASCII)
+- Cost estimate + exemple de commande
+- Common issues
 
-### Step 5 — Update catalog.json
-Add entry: { id, name, version, description, author, tags, cost_tier }
-Bump catalog version (patch).
+### Step 5 — Submit via hub
 
-### Step 6 — Validate & Commit
-Run: grep -r "SolSolis-Sys" blueprint.json (should be 0 hits for non-SolSolis blueprints)
-Confirm: README.md exists, blueprint.json validates, catalog.json updated.
+```bash
+conductor hub submit ./my-blueprint/
+# ou
+node scripts/hub.js submit ./my-blueprint/
+```
+
+Résultat: issue GitHub créée sur `SolSolis-Sys/conductor-blueprints` avec label `submission`.
 
 ## Output Format
 
-Return:
 ```
-BLUEPRINT CREATED: <name>
-├── blueprint.json ✓ (schema valid)
+BLUEPRINT CREATED: <name> (v1.1)
+├── blueprint.json ✓ (gates: N agent + M tool)
 ├── README.md ✓
-└── catalog.json updated ✓
-Cost tier: <low|medium|high>
-Ready for: conductor hub install <raw-url>
+└── Submitted: https://github.com/SolSolis-Sys/conductor-blueprints/issues/<N>
+Cost tier: <low|medium|high> (~$X.XX/run)
 ```
 
 ## Anti-patterns
-- Never create skills/ in conductor-blueprints (static public repo)
-- Never hardcode SolSolis-Sys in user-contributed blueprints
-- Never skip README.md (required by spec)
-- Never set cost_tier without token estimate
+
+- ❌ Utiliser `agents[]` — toujours `gates[]` pour les nouveaux blueprints
+- ❌ Oublier `id` sur chaque gate (obligatoire en v1.1)
+- ❌ `output_schema` sans `output_format: "json"` — le schema ne sera pas évalué
+- ❌ Type `"skill"` — pas valide en v1.1
+- ❌ Hardcoder `SolSolis-Sys` dans les blueprints utilisateurs
+- ❌ Omettre `README.md`
+- ❌ `cost_tier` sans estimation tokens
+- ❌ `allowed_commands` avec commandes destructives (`rm -rf`, `del`, `format`)
