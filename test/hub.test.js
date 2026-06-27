@@ -468,6 +468,162 @@ test('install skips if same version already present', async () => {
   assert(skipped, `install should log "already installed" when version matches, got: ${JSON.stringify(logMessages)}`);
 });
 
+// Test B1: list() normalise les descriptions multilignes (Bug #1)
+test('Test B1: list — descriptions multilignes normalisées sur une seule ligne', async () => {
+  const catalog = {
+    blueprints: [
+      {
+        name: 'bp-multiline',
+        description: 'Line one\nline two\nline three',
+        tags: ['test'],
+        cost_tier: 'low'
+      }
+    ]
+  };
+
+  const logLines = [];
+  const originalLog = console.log.bind(console);
+  console.log = (...args) => { logLines.push(args.join(' ')); };
+
+  stubProcessExit();
+  try {
+    mockHttpsGet((url, cb) => {
+      const res = makeFakeResponse(200, JSON.stringify(catalog));
+      cb(res);
+      return makeFakeRequest();
+    });
+    await hub.list();
+  } finally {
+    console.log = originalLog;
+    restoreHttpsGet();
+    restoreProcessExit();
+  }
+
+  const allOutput = logLines.join('\n');
+  // No raw newlines should appear inside any table row
+  assert(!allOutput.includes('line one\n'), 'description should not contain raw newline');
+  // The normalized description should appear on a single line
+  const hasNormalized = logLines.some((l) => l.includes('Line one line two line three'));
+  assert(hasNormalized, `normalized description should appear on one line, got:\n${allOutput}`);
+});
+
+// Test B2a: install écrit README.md quand présent (Bug #2)
+test('Test B2a: install — README.md écrit sur disque quand présent', async () => {
+  const originalMkdirSync    = fs.mkdirSync.bind(fs);
+  const originalWriteFileSync = fs.writeFileSync.bind(fs);
+
+  const writtenFiles = {};
+
+  fs.mkdirSync = (p, opts) => {
+    if (typeof p === 'string' && p.includes('conductor') && p.includes('blueprints')) {
+      const rel = path.relative(path.join(os.homedir(), '.claude', 'conductor', 'blueprints'), p);
+      p = path.join(TMP, 'blueprints-b2a', rel);
+    }
+    originalMkdirSync(p, opts);
+  };
+
+  fs.writeFileSync = (p, content, enc) => {
+    if (typeof p === 'string' && p.includes('conductor') && p.includes('blueprints')) {
+      const rel = path.relative(path.join(os.homedir(), '.claude', 'conductor', 'blueprints'), p);
+      p = path.join(TMP, 'blueprints-b2a', rel);
+      writtenFiles[path.basename(p)] = content;
+    }
+    originalWriteFileSync(p, content, enc);
+  };
+
+  const bp = { name: 'readme-bp', version: '1.0.0', agents: [{ role: 'tester' }] };
+  const readmeText = '# Readme for readme-bp\nInstall guide here.';
+
+  stubProcessExit();
+  try {
+    mockHttpsGet((url, cb) => {
+      if (url.includes('README.md')) {
+        const res = makeFakeResponse(200, readmeText);
+        cb(res);
+      } else {
+        const res = makeFakeResponse(200, JSON.stringify(bp));
+        cb(res);
+      }
+      return makeFakeRequest();
+    });
+    await hub.install('readme-bp');
+  } catch (e) {
+    if (e.message && e.message.includes('process.exit')) {
+      throw new Error(`install failed unexpectedly: ${e.message}`);
+    }
+  } finally {
+    fs.mkdirSync    = originalMkdirSync;
+    fs.writeFileSync = originalWriteFileSync;
+    restoreHttpsGet();
+    restoreProcessExit();
+  }
+
+  assert('blueprint.json' in writtenFiles, 'blueprint.json should have been written');
+  assert('README.md' in writtenFiles, 'README.md should have been written');
+  assert(writtenFiles['README.md'] === readmeText, 'README.md content should match fetched content');
+
+  try { fs.rmSync(path.join(TMP, 'blueprints-b2a'), { recursive: true, force: true }); } catch (_) {}
+});
+
+// Test B2b: install continue sans erreur quand README.md absent 404 (Bug #2)
+test('Test B2b: install — continue sans erreur quand README.md absent (404)', async () => {
+  const originalMkdirSync    = fs.mkdirSync.bind(fs);
+  const originalWriteFileSync = fs.writeFileSync.bind(fs);
+
+  const writtenFiles = {};
+
+  fs.mkdirSync = (p, opts) => {
+    if (typeof p === 'string' && p.includes('conductor') && p.includes('blueprints')) {
+      const rel = path.relative(path.join(os.homedir(), '.claude', 'conductor', 'blueprints'), p);
+      p = path.join(TMP, 'blueprints-b2b', rel);
+    }
+    originalMkdirSync(p, opts);
+  };
+
+  fs.writeFileSync = (p, content, enc) => {
+    if (typeof p === 'string' && p.includes('conductor') && p.includes('blueprints')) {
+      const rel = path.relative(path.join(os.homedir(), '.claude', 'conductor', 'blueprints'), p);
+      p = path.join(TMP, 'blueprints-b2b', rel);
+      writtenFiles[path.basename(p)] = content;
+    }
+    originalWriteFileSync(p, content, enc);
+  };
+
+  const bp = { name: 'no-readme-bp', version: '1.0.0', agents: [{ role: 'tester' }] };
+  let installFailed = false;
+
+  stubProcessExit();
+  try {
+    mockHttpsGet((url, cb) => {
+      if (url.includes('README.md')) {
+        // Simulate 404 for README.md
+        const res = makeFakeResponse(404, '');
+        cb(res);
+      } else {
+        const res = makeFakeResponse(200, JSON.stringify(bp));
+        cb(res);
+      }
+      return makeFakeRequest();
+    });
+    await hub.install('no-readme-bp');
+  } catch (e) {
+    if (e.message && e.message.includes('process.exit')) {
+      installFailed = true;
+    }
+  } finally {
+    fs.mkdirSync    = originalMkdirSync;
+    fs.writeFileSync = originalWriteFileSync;
+    restoreHttpsGet();
+    restoreProcessExit();
+  }
+
+  assert(!installFailed, 'install should not fail when README.md returns 404');
+  assert('blueprint.json' in writtenFiles, 'blueprint.json should still be written when README absent');
+  assert(!('README.md' in writtenFiles), 'README.md should NOT be written when server returns 404');
+
+  try { fs.rmSync(path.join(TMP, 'blueprints-b2b'), { recursive: true, force: true }); } catch (_) {}
+});
+
 // ── Cleanup ────────────────────────────────────────────────────────────────
 
 function cleanup() {
